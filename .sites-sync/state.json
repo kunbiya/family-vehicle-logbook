@@ -734,5 +734,6 @@
       "mode": "100644",
       "sha256": "6f6d890794fbe23f3e35cceb327f49d5977432a5aaf715e040a6408932da395b"
     }
-  ]
+  ],
+  "snapshot_commit": "db72fe649690bcc44b1e5334dd089969566b6e7d"
 }
