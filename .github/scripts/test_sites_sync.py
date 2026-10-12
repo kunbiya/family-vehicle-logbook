@@ -2,10 +2,15 @@
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
+
+sys.dont_write_bytecode = True
+os.environ.pop('GITHUB_STEP_SUMMARY', None)
 
 spec = importlib.util.spec_from_file_location('sync', Path(__file__).with_name('sites_sync.py'))
 sync = importlib.util.module_from_spec(spec)
