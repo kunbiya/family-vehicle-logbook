@@ -1,0 +1,1 @@
+ALTER TABLE `maintenance` ADD `other_item` text DEFAULT '' NOT NULL;

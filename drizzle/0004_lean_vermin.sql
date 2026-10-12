@@ -1,0 +1,1 @@
+ALTER TABLE `vehicle_settings` ADD `mileage` real DEFAULT 0 NOT NULL;

@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1791772745444,
+      "tag": "0000_small_adam_destine",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791805847906,
+      "tag": "0001_dazzling_bloodstorm",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791806682547,
+      "tag": "0002_bright_queen_noir",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1791808081371,
+      "tag": "0003_outstanding_thunderbolts",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791811153537,
+      "tag": "0004_lean_vermin",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1791812052871,
+      "tag": "0005_groovy_shinko_yamashiro",
+      "breakpoints": true
+    }
+  ]
+}
