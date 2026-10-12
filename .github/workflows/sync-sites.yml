@@ -17,14 +17,16 @@ jobs:
     if: github.repository == 'kunbiya/family-vehicle-logbook'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - name: Check out trusted main branch
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: main
           fetch-depth: 1
       - name: Test synchronization rules
-        run: python3 .github/scripts/test_sites_sync.py
+        run: python3 -B .github/scripts/test_sites_sync.py
       - name: Fetch latest incoming snapshot
         run: git fetch --no-tags origin +refs/heads/sites-sync:refs/remotes/origin/sites-sync
       - name: Validate and apply source files
