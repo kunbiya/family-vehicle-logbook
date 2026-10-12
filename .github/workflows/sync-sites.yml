@@ -1,0 +1,44 @@
+name: Sync Sites source
+
+on:
+  push:
+    branches: [sites-sync]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sites-source-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'kunbiya/family-vehicle-logbook'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out trusted main branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Test synchronization rules
+        run: python3 .github/scripts/test_sites_sync.py
+      - name: Fetch latest incoming snapshot
+        run: git fetch --no-tags origin +refs/heads/sites-sync:refs/remotes/origin/sites-sync
+      - name: Validate and apply source files
+        run: python3 .github/scripts/sites_sync.py apply origin/sites-sync
+      - name: Commit source backup when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --cached --quiet; then
+            echo "No source changes to synchronize." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "chore: synchronize published Sites source"
+          git push origin HEAD:main
+          echo "Source snapshot synchronized to main. Sites hosting and D1 were not modified." >> "$GITHUB_STEP_SUMMARY"

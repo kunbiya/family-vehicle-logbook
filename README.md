@@ -4,7 +4,7 @@
 
 ## 운영 방식
 
-실제 서비스는 OpenAI Sites에서 계속 운영합니다. 이 GitHub 저장소는 소스 코드 보관용이며, GitHub Pages나 자동 배포는 설정하지 않았습니다. GitHub와 Sites의 변경 사항은 자동 동기화되지 않습니다.
+실제 서비스는 OpenAI Sites에서 계속 운영합니다. 이 GitHub 저장소는 소스 코드 보관용이며, GitHub Pages나 자동 배포는 설정하지 않았습니다. Sites 게시 후 최신 소스를 `sites-sync` 브랜치로 전달하면 GitHub Actions가 검증 후 `main`을 갱신합니다. Actions가 Sites 변경을 직접 감지하거나 가져오지는 않습니다. 자세한 절차는 [동기화 문서](docs/sites-sync.md)를 참고하세요.
 
 ## 기능
 
