@@ -22,7 +22,7 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ComponentProps, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_MAINTENANCE_ITEMS } from "@/lib/maintenance-catalog";
 import { useBusyOperation } from "./busy-layer";
 
@@ -468,10 +468,11 @@ function SettingsModal({ data, onClose, onSaved, signInPath }: { data: Dashboard
 
 function MaintenanceItemsModal({ items, onClose, onSaved, signInPath }: { items: string[]; onClose: () => void; onSaved: (message: string) => Promise<void>; signInPath: string }) {
   const beginBusy = useBusyOperation();
+  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<{ status?: string; message: string } | null>(null);
   const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); if (saving) return; setSaving(true); setError(null);
+    event.preventDefault(); if (!editing || saving) return; setSaving(true); setError(null);
     const form = new FormData(event.currentTarget);
     const stopBusy = beginBusy();
     try {
@@ -488,9 +489,21 @@ function MaintenanceItemsModal({ items, onClose, onSaved, signInPath }: { items:
     } finally { setSaving(false); stopBusy(); }
   };
   return <ModalShell title="정비 항목 관리" subtitle="정비 기록 입력창의 선택 목록을 관리합니다." icon={Settings2} onClose={() => { if (!saving) onClose(); }}><form onSubmit={submit}>
-    <Field label="정비 항목" hint="한 줄에 하나씩 입력해 주세요. 항목을 제거해도 이미 저장한 정비 기록은 보존됩니다."><textarea name="maintenanceItems" defaultValue={items.join("\n")} rows={10} required /></Field>
-    <FormFooter saving={saving} error={error} onClose={onClose} signInPath={signInPath} />
+    <Field label="정비 항목" hint={editing ? "한 줄에 하나씩 입력해 주세요. 항목을 제거해도 이미 저장한 정비 기록은 보존됩니다." : undefined}><textarea name="maintenanceItems" defaultValue={items.join("\n")} rows={10} required disabled={!editing || saving} /></Field>
+    <FormFooter saving={saving} error={error} onClose={onClose} signInPath={signInPath} onEdit={editing ? undefined : () => setEditing(true)} />
   </form></ModalShell>;
+}
+
+function DateInput(props: Omit<ComponentProps<"input">, "type" | "onClick">) {
+  return <input {...props} type="date" onClick={(event) => {
+    const input = event.currentTarget;
+    if (input.disabled || input.readOnly || typeof input.showPicker !== "function") return;
+    try {
+      input.showPicker();
+    } catch {
+      // Keep native date entry available when the browser blocks the picker.
+    }
+  }} />;
 }
 
 function LocationField({ name, label, value, onChange }: { name: "departure" | "destination"; label: string; value: string; onChange: (value: string) => void }) {
@@ -519,7 +532,7 @@ function TripModal({ onClose, onSaved, signInPath, record }: { onClose: () => vo
     finally { setSaving(false); stopBusy(); }
   };
   return <ModalShell title={record ? "운행 기록 수정" : "운행 기록 추가"} subtitle="저장한 기록은 운행 목록에 바로 반영됩니다." icon={Route} onClose={() => { if (!saving) onClose(); }}><form onSubmit={submit}><div className="form-grid trip-form-grid">
-    <Field label="운행일자" wide><input name="date" type="date" defaultValue={record?.date ?? today()} required /></Field>
+    <Field label="운행일자" wide><DateInput name="date" defaultValue={record?.date ?? today()} required /></Field>
     <LocationField name="departure" label="출발지" value={departure} onChange={setDeparture} /><LocationField name="destination" label="목적지" value={destination} onChange={setDestination} />
     <Field label="주행 전 계기판(km)"><input name="startKm" type="number" min="0" step="any" value={startKm} onChange={(event) => setStartKm(event.target.value)} required /></Field>
     <Field label="주행 후 계기판(km)" hint={`자동 계산 주행거리: ${distance.toLocaleString("ko-KR")}km`}><input name="endKm" type="number" min="0" step="any" value={endKm} onChange={(event) => setEndKm(event.target.value)} required /></Field>
@@ -559,7 +572,7 @@ function MaintenanceModal({ items, latestMileage, onClose, onSaved, signInPath, 
   return <ModalShell title={record ? "정비 기록 수정" : "정비 기록 추가"} subtitle="정비일자와 정비항목만 입력해도 저장할 수 있습니다." icon={Wrench} onClose={() => { if (!saving) onClose(); }}>
     {loadError && <div className="form-error" role="alert"><CircleAlert size={17} /><span>기본 정비 항목을 표시하고 있습니다. {loadError.message}</span>{loadError.status === "authentication_required" && <a href={signInPath} target="_top">비밀번호 입력</a>}</div>}
     <form onSubmit={submit}><div className="form-grid">
-      <Field label="정비일자 *"><input name="date" type="date" defaultValue={record?.date ?? today()} required /></Field>
+      <Field label="정비일자 *"><DateInput name="date" defaultValue={record?.date ?? today()} required /></Field>
       <Field label="정비항목 *"><select name="item" required value={selectedItem} onChange={(event) => setSelectedItem(event.target.value)}><option value="" disabled>항목 선택</option>{availableItems.map((item) => <option key={item}>{item}</option>)}</select></Field>
       {selectedItem === "기타 정비" && <Field label="기타 정비항목" wide hint="선택 입력 · 실제 정비한 항목을 적어 주세요."><input name="otherItem" defaultValue={record?.otherItem ?? ""} maxLength={80} placeholder="예: 헤드램프 교체, 도어 수리" /></Field>}
       <Field label="정비 시 주행거리(km)" hint={latestMileage ? `최근 기록: ${latestMileage.toLocaleString("ko-KR")}km · 선택 입력` : "선택 입력"}><input name="mileage" defaultValue={record && numberOf(record.mileage) ? numberOf(record.mileage) : ""} type="number" min="0" placeholder="선택 입력" /></Field>
@@ -567,13 +580,13 @@ function MaintenanceModal({ items, latestMileage, onClose, onSaved, signInPath, 
       <Field label="정비 상세 내용" wide><input name="detail" defaultValue={record?.detail ?? ""} placeholder="선택 입력 · 예: 합성유 5W-30 교환" /></Field>
       <Field label="정비소 / 업체명" wide><input name="vendor" defaultValue={record?.vendor ?? ""} placeholder="선택 입력" /></Field>
       <Field label="다음 교체 권장 주행거리"><input name="nextMileage" defaultValue={record?.nextMileage ?? ""} type="number" min="0" placeholder="선택 입력" /></Field>
-      <Field label="다음 교체 권장일"><input name="nextDate" defaultValue={record?.nextDate ?? ""} type="date" /></Field>
+      <Field label="다음 교체 권장일"><DateInput name="nextDate" defaultValue={record?.nextDate ?? ""} /></Field>
       <Field label="영수증 / 정비명세서 링크" wide><input name="receiptUrl" defaultValue={record?.receiptUrl ?? ""} type="url" placeholder="https://" /></Field>
       <Field label="비고" wide><textarea name="note" defaultValue={record?.note ?? ""} rows={2} placeholder="선택 입력" /></Field>
     </div><FormFooter saving={saving} error={error} onClose={onClose} signInPath={signInPath} saveLabel={record ? "수정사항 저장" : "저장하기"} /></form>
   </ModalShell>;
 }
 
-function FormFooter({ saving, error, onClose, signInPath, saveLabel = "저장하기" }: { saving: boolean; error: { status?: string; message: string } | null; onClose: () => void; signInPath: string; saveLabel?: string }) {
-  return <><div className="write-notice"><ShieldCheck size={17} /><span>저장한 기록은 가족이 함께 사용하는 차량 기록에 반영됩니다.</span></div>{error && <div className="form-error" role="alert"><CircleAlert size={17} /><span>{error.message}</span>{error.status === "authentication_required" && <a href={signInPath} target="_top">비밀번호 입력</a>}</div>}<footer className="modal-footer"><button type="button" className="secondary-button" onClick={onClose} disabled={saving}>취소</button><button type="submit" className="primary-button" disabled={saving}>{saving ? <><RefreshCw className="spin" size={16} />저장 중</> : <><CheckCircle2 size={17} />{saveLabel}</>}</button></footer></>;
+function FormFooter({ saving, error, onClose, signInPath, saveLabel = "저장하기", onEdit }: { saving: boolean; error: { status?: string; message: string } | null; onClose: () => void; signInPath: string; saveLabel?: string; onEdit?: () => void }) {
+  return <><div className="write-notice"><ShieldCheck size={17} /><span>저장한 기록은 가족이 함께 사용하는 차량 기록에 반영됩니다.</span></div>{error && <div className="form-error" role="alert"><CircleAlert size={17} /><span>{error.message}</span>{error.status === "authentication_required" && <a href={signInPath} target="_top">비밀번호 입력</a>}</div>}<footer className="modal-footer"><button type="button" className="secondary-button" onClick={onClose} disabled={saving}>취소</button><button type={onEdit ? "button" : "submit"} onClick={onEdit} className="primary-button" disabled={saving}>{saving ? <><RefreshCw className="spin" size={16} />저장 중</> : onEdit ? <><Pencil size={17} />수정하기</> : <><CheckCircle2 size={17} />{saveLabel}</>}</button></footer></>;
 }
